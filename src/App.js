@@ -6,19 +6,10 @@ import Layout from "./hoc/Layout/Layout";
 import BurgerBuilder from "./containers/BurgerBuilder/BurgerBuilder";
 import Logout from "./containers/Auth/Logout/Logout";
 import Spinner from "./components/UI/Spinner/Spinner";
+import Checkout from "./containers/Checkout/Checkout";
+import Order from "./containers/Orders/Orders";
+import Auth from "./containers/Auth/Auth";
 import * as actions from "./store/actions/";
-
-const Checkout = React.lazy(() => {
-  return import("./containers/Checkout/Checkout");
-});
-
-const Order = React.lazy(() => {
-  return import("./containers/Orders/Orders");
-});
-
-const Auth = React.lazy(() => {
-  return import("./containers/Auth/Auth");
-});
 
 const app = props => {
   const { onTryAuthSignup } = props;
@@ -49,9 +40,7 @@ const app = props => {
   }
   return (
     <div>
-      <Layout>
-        <Suspense fallback={<Spinner />}>{routes}</Suspense>
-      </Layout>
+      <Layout>{routes}</Layout>
     </div>
   );
 };
