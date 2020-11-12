@@ -1,4 +1,4 @@
-import React, { Component } from "react";
+import React, { useState } from "react";
 import { connect } from "react-redux";
 
 import classes from "./ContactData.css";
@@ -18,66 +18,60 @@ const DELIVERY_OPTIONS = [
   { value: "cheapest", displayValue: "Cheapest" },
 ];
 
-class ContactData extends Component {
-  state = {
-    orderForm: {
-      name: inputProperties("input", "text", "Your Name", { required: true }),
-      street: inputProperties("input", "text", "Your Street", {
-        required: true,
-      }),
-      zipCode: inputProperties("input", "text", "Your CAP", {
-        required: true,
-        minLength: 4,
-        maxLength: 6,
-      }),
-      country: inputProperties("input", "text", "Your Country", {
-        required: true,
-      }),
-      email: inputProperties("input", "email", "Your Email", {
-        required: true,
-      }),
-      deliveryMethod: selectProperties(
-        "select",
-        DELIVERY_OPTIONS,
-        DELIVERY_OPTIONS[0].value
-      ),
-    },
-    isFormValid: false,
-  };
+const contactData = props => {
+  const [orderForm, setOrderForm] = useState({
+    name: inputProperties("input", "text", "Your Name", { required: true }),
+    street: inputProperties("input", "text", "Your Street", {
+      required: true,
+    }),
+    zipCode: inputProperties("input", "text", "Your CAP", {
+      required: true,
+      minLength: 4,
+      maxLength: 6,
+    }),
+    country: inputProperties("input", "text", "Your Country", {
+      required: true,
+    }),
+    email: inputProperties("input", "email", "Your Email", {
+      required: true,
+    }),
+    deliveryMethod: selectProperties(
+      "select",
+      DELIVERY_OPTIONS,
+      DELIVERY_OPTIONS[0].value
+    ),
+  });
 
-  orderHandler = (event) => {
+  const [isFormValid, setFormValid] = useState(false);
+
+  const orderHandler = event => {
     event.preventDefault();
 
     const formData = {};
-    for (let formElementIdentifier in this.state.orderForm) {
-      formData[formElementIdentifier] = this.state.orderForm[
-        formElementIdentifier
-      ].value;
+    for (let formElementIdentifier in orderForm) {
+      formData[formElementIdentifier] = orderForm[formElementIdentifier].value;
     }
 
     const order = {
-      ingredients: this.props.ingredients,
-      price: this.props.price,
+      ingredients: props.ingredients,
+      price: props.price,
       orderData: formData,
-      userId: this.props.userId,
+      userId: props.userId,
     };
 
-    this.props.onOrderBurger(order, this.props.token);
+    props.onOrderBurger(order, props.token);
   };
 
-  inputChangedHandler = (event, inputIdentifier) => {
-    const updatedFormElement = updateObject(
-      this.state.orderForm[inputIdentifier],
-      {
-        value: event.target.value,
-        valid: checkValidity(
-          event.target.value,
-          this.state.orderForm[inputIdentifier].validation
-        ),
-        touched: true,
-      }
-    );
-    const updatedOrderForm = updateObject(this.state.orderForm, {
+  const inputChangedHandler = (event, inputIdentifier) => {
+    const updatedFormElement = updateObject(orderForm[inputIdentifier], {
+      value: event.target.value,
+      valid: checkValidity(
+        event.target.value,
+        orderForm[inputIdentifier].validation
+      ),
+      touched: true,
+    });
+    const updatedOrderForm = updateObject(orderForm, {
       [inputIdentifier]: updatedFormElement,
     });
     updatedOrderForm[inputIdentifier] = updatedFormElement;
@@ -88,50 +82,49 @@ class ContactData extends Component {
       isFormValid = updatedOrderForm[inputIdentifier].valid && isFormValid;
     }
 
-    this.setState({ orderForm: updatedOrderForm, isFormValid: isFormValid });
+    setOrderForm(updatedOrderForm);
+    setFormValid(isFormValid);
   };
 
-  render() {
-    const formElementsArray = [];
-    for (let key in this.state.orderForm) {
-      formElementsArray.push({
-        id: key,
-        config: this.state.orderForm[key],
-      });
-    }
-    let form = (
-      <form onSubmit={this.orderHandler}>
-        {formElementsArray.map((formElement) => (
-          <Input
-            key={formElement.id}
-            elementType={formElement.config.elementType}
-            elementConfig={formElement.config.elementConfig}
-            value={formElement.config.value}
-            invalid={!formElement.config.valid}
-            shouldValidate={formElement.config.validation}
-            touched={formElement.config.touched}
-            changed={(event) => this.inputChangedHandler(event, formElement.id)}
-          />
-        ))}
-        <Button buttonType="Success" disabled={!this.state.isFormValid}>
-          ORDER
-        </Button>
-      </form>
-    );
-    if (this.props.loading) {
-      form = <Spinner />;
-    }
-
-    return (
-      <div className={classes.ContactData}>
-        <h4>Enter your Contact Data</h4>
-        {form}
-      </div>
-    );
+  const formElementsArray = [];
+  for (let key in orderForm) {
+    formElementsArray.push({
+      id: key,
+      config: orderForm[key],
+    });
   }
-}
+  let form = (
+    <form onSubmit={orderHandler}>
+      {formElementsArray.map(formElement => (
+        <Input
+          key={formElement.id}
+          elementType={formElement.config.elementType}
+          elementConfig={formElement.config.elementConfig}
+          value={formElement.config.value}
+          invalid={!formElement.config.valid}
+          shouldValidate={formElement.config.validation}
+          touched={formElement.config.touched}
+          changed={event => inputChangedHandler(event, formElement.id)}
+        />
+      ))}
+      <Button buttonType="Success" disabled={!isFormValid}>
+        ORDER
+      </Button>
+    </form>
+  );
+  if (props.loading) {
+    form = <Spinner />;
+  }
 
-const mapStateToProps = (state) => {
+  return (
+    <div className={classes.ContactData}>
+      <h4>Enter your Contact Data</h4>
+      {form}
+    </div>
+  );
+};
+
+const mapStateToProps = state => {
   return {
     ingredients: state.burgerBuilder.ingredients,
     price: state.burgerBuilder.totalPrice,
@@ -141,7 +134,7 @@ const mapStateToProps = (state) => {
   };
 };
 
-const mapDispatchToProps = (dispatch) => {
+const mapDispatchToProps = dispatch => {
   return {
     onOrderBurger: (order, token) =>
       dispatch(actions.purchaseBurger(order, token)),
@@ -151,4 +144,4 @@ const mapDispatchToProps = (dispatch) => {
 export default connect(
   mapStateToProps,
   mapDispatchToProps
-)(withErrorHandler(ContactData, axios));
+)(withErrorHandler(contactData, axios));
